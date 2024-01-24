@@ -1,4 +1,4 @@
-# Flappy Bird Replica
+# Flappy Rat
 
 This is a simple Flappy Bird game implemented in Python using the Pygame library.
 
