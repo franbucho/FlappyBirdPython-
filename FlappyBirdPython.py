@@ -19,6 +19,7 @@ bird_width, bird_height = 50, 40
 bird_x = width // 4
 bird_y = height // 2 - bird_height // 2
 bird_velocity = 5
+jump_height = 10
 gravity = 1
 
 # Configuración de los obstáculos
@@ -43,7 +44,7 @@ def run_game():
 
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
-                    bird_velocity = -10
+                    bird_velocity = -jump_height
 
                 # Agregar la opción de continuar después de morir
                 if event.key == pygame.K_RETURN:
@@ -56,6 +57,13 @@ def run_game():
         # Actualizar posición del obstáculo
         obstacle_x -= obstacle_velocity
 
+        # Verificar si el pájaro pasa el obstáculo y actualizar el puntaje
+        if obstacle_x + obstacle_width < bird_x:
+            score += 1
+            obstacle_x = width
+            obstacle_height = random.randint(150, 400)
+            obstacle_y = height - obstacle_height - 50
+
         # Verificar colisiones
         if (
             bird_x < obstacle_x + obstacle_width
@@ -64,22 +72,18 @@ def run_game():
         ):
             game_over()
 
-        # Verificar si el pájaro pasa el obstáculo y actualizar el puntaje
-        if obstacle_x + obstacle_width < bird_x:
-            score += 1
-            obstacle_x = width
-            obstacle_height = random.randint(150, 400)
-            obstacle_y = height - obstacle_height - 50
-
         # Verificar límites de pantalla
-        if bird_y < 0 or bird_y + bird_height > height:
+        if bird_y < 0:
+            bird_y = 0
+            bird_velocity = 0
+        elif bird_y + bird_height > height:
             game_over()
 
         # Dibujar en la pantalla
         screen.fill(white)
         pygame.draw.rect(screen, black, (bird_x, bird_y, bird_width, bird_height))
-        pygame.draw.rect(screen, black, (obstacle_x, 0, obstacle_width, height - obstacle_height - obstacle_gap))
-        pygame.draw.rect(screen, black, (obstacle_x, obstacle_y + obstacle_gap, obstacle_width, obstacle_height))
+        pygame.draw.rect(screen, black, (obstacle_x, 0, obstacle_width, obstacle_y))
+        pygame.draw.rect(screen, black, (obstacle_x, obstacle_y + obstacle_gap, obstacle_width, height - obstacle_y - obstacle_gap))
 
         # Mostrar puntaje
         font = pygame.font.Font(None, 36)
@@ -103,12 +107,27 @@ def game_over():
 
     pygame.display.flip()
 
+    # Esperar hasta que se presione ENTER
+    waiting_for_enter = True
+    while waiting_for_enter:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RETURN:
+                    reset_game()
+                    waiting_for_enter = False  # Salir del bucle cuando se presiona ENTER
+
+        pygame.time.Clock().tick(30)
+
 # Función para reiniciar el juego
 def reset_game():
     global bird_y, bird_velocity, obstacle_x, obstacle_height, obstacle_y, score
 
     bird_y = height // 2 - bird_height // 2
-    bird_velocity = 5
+    bird_velocity = 0
 
     obstacle_x = width
     obstacle_height = random.randint(150, 400)
